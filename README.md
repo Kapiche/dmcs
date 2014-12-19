@@ -9,8 +9,7 @@ Python web application written using flask. This prototype tool allows uploading
 
 Usage
 -----
-dmcs is a Flask application and can be run simply via::
-  python app.py
+dmcs is a Flask application and can be run simply via `python app.py`.
 
 Credits
 -------
