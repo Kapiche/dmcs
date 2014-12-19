@@ -7,6 +7,11 @@ About
 -----
 Python web application written using flask. This prototype tool allows uploading of a zip file representing a faceted document corpus to generate a semantic model. New documents can then be processed against the model and classified. These features are exposed through a simple bootstrap interface and d3.js visualisations.
 
+Usage
+-----
+dmcs is a Flask application and can be run simply via::
+  python app.py
+
 Credits
 -------
 This application was developed by [Kris Rogers](https://github.com/krisrogers). This work was supported by the University of Queensland Vice Chancellor’s Strategic Initiative Grant in Language Technologies.
