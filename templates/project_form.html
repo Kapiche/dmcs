@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Create New Project{% endblock %}
+{% block content %}
+    <h1>Create New Project</h1>
+    <br/>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="well bs-component">
+                <form data-toggle="validator" role="form" id="project-form" class="form-horizontal"
+                      method="POST" enctype=multipart/form-data >
+                    <fieldset>
+                        <div class="form-group required">
+                            <label class="col-lg-3 control-label">Project Name:</label>
+                            <div class="col-lg-7">
+                                <input type="text" id="name" name="name">
+                            </div>
+                        </div>
+                        <div class="form-group required">
+                            <label class="col-lg-3 control-label">Data File:</label>
+                            <div class="col-lg-7">
+                                <input type="file" id="data" style="width: 300px" name="data">
+                            </div>
+                        </div>
+                        <div class="form-group required">
+                            <label class="col-lg-3 control-label">Number of Features:</label>
+                            <div class="col-lg-7">
+                                <input type="text" id="features" size="3" name="features" value="300">
+                                <i class="glyphicon glyphicon-question-sign" rel="tooltip"
+                                   title="The number of latent features to include in the model."
+                                   data-toggle="tooltip" data-placement="right"></i>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-lg-3 control-label">Normalise Frequencies:</label>
+                            <div class="col-lg-7">
+                                <input type="checkbox" id="normalise" name="normalise" checked="checked">
+                                <i class="glyphicon glyphicon-question-sign" rel="tooltip" style="margin-left: 10px"
+                                   title="Apply tf-idf transformation to term-document frequencies before processing."
+                                   data-toggle="tooltip" data-placement="right"></i>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-lg-3 control-label">Custom Stopwords File:</label>
+                            <div class="col-lg-7">
+                                <input type="file" id="stopwords" style="width: 300px" name="stopwords">
+                                <i class="glyphicon glyphicon-question-sign" rel="tooltip"
+                                   style="float: right; position: absolute; left: 320px; top: 10px"
+                                   title="Override default stopwords with a file that specifies a single stopword on every line."
+                                   data-toggle="tooltip" data-placement="top"></i>
+                            </div>
+                        </div>
+                        <div class="form-group pull-right">
+                            <div class="col-lg-12">
+                                <button class="btn btn-default" onclick="window.location = '{{url_for('projects') }}'; return false;">Cancel</button>
+                                <button type="submit" class="btn btn-primary">Create</button>
+                            </div>
+                        </div>
+                    </fieldset>
+                </form>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="panel panel-info">
+                <div class="panel-body">This form allows you to create a new project to analyse documents against.</div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            // Form validation
+            ZIP_FILE_RE = /.+(\.zip)$/i;
+            $('#project-form')
+                .bootstrapValidator({
+                    feedbackIcons: {
+                        valid: 'glyphicon glyphicon-ok',
+                        invalid: 'glyphicon glyphicon-remove',
+                        validating: 'glyphicon glyphicon-refresh'
+                    },
+                    submitHandler: function (validator, form) {
+                            
+                        BootstrapDialog.show({
+                            title: 'Creating Project',
+                            message: '<i class="glyphicon spinner"></i><span class="loading-text">Please wait...</span>',
+                            closable: false,
+                            buttons: []
+                        });
+                        $.ajax({
+                            url: '{{ url_for("project_create") }}',
+                            type: 'POST',
+                            //Ajax events
+                            success: function (response) {
+                                // Small, abitrary delay before redirecting to ensure skeleton project has been created
+                                setTimeout(function() {
+                                    window.location = response.redirect_url;
+                                }, 5000);
+                            },
+                            error: server.handleError,
+                            data: new FormData(form[0]),
+                            //Options to tell jQuery not to process data or worry about content-type.
+                            cache: false,
+                            contentType: false,
+                            processData: false
+                        });
+                    },
+                    fields: {
+                        name: {
+                            validators: {
+                                notEmpty: {
+                                    message: 'A project name must be specified'
+                                }
+                            }
+                        },
+                        data: {
+                            validators: {
+                                notEmpty: {
+                                    message: 'A data file is required'
+                                },
+                                regexp: {
+                                    regexp: ZIP_FILE_RE,
+                                    message: 'Data file must be a zip file with .zip extension'
+                                }
+                            }
+                        },
+                        features: {
+                            validators: {
+                                between: {
+                                    min: 5,
+                                    max: 500,
+                                    message: 'Must choose between 5 and 500 features'
+                                },
+                                integer: {
+                                    message: 'The value is not an integer'
+                                },
+                                notEmpty: {
+                                    message: 'Number of features is required'
+                                },
+                            }
+                        },
+                        stopwords: {
+                            validators: {
+                                file: {
+                                    type: 'text/plain',
+                                    message: 'Stopwords file must be a txt file with .txt extension'
+                                }
+                            }
+                        },
+                    }
+                });
+
+            $('#nav-bar li').removeClass('active');
+            $('#nav-project-create').addClass('active');
+        });
+
+
+        // Auto-populate name field from data file name
+        $('#data').on('change', function () {
+            var fileName = $('#data')[0].files[0].name;
+            if (fileName.match(ZIP_FILE_RE) != null && $('#name').val().length == 0) {
+                $('#name').val(fileName.substring(0, fileName.length-4));
+                $('#project-form').data('bootstrapValidator').updateStatus('name', 'NOT_VALDIATED').validateField('name');
+            }
+        });
+    </script>
+{% endblock %}

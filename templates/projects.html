@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}View Projects{% endblock %}
+{% block extrahead %}
+    <meta http-equiv="refresh" content="45" >
+{% endblock %}
+
+{% block content %}
+    <h1>View Projects</h1>
+    <br/>
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Project</th>
+                <th style="width:180px">Status</th>
+                <th>Facets</th>
+                <th style="width:100px">Features</th>
+                <th style="width:100px">Normalised</th>
+                <th style="width:100px">Documents</th>
+                <th style="width:100px">Vocabulary</th>
+                <th style=width:50px">&nbsp;</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for project in projects %}
+                <tr>
+                    <td>{{ project.name }}</td>
+                    <td>{{ project.status }}</td>
+                    <td>{{ ', '.join(project.facets) }}</td>
+                    <td>{{ project.num_features }}</td>
+                    <td>{{ project.normalise_frequencies }}</td>
+                    <td>{{ project.num_documents }}</td>
+                    <td>{{ project.vocab_size }} words</td>
+                    <td><i onclick="onDelete('{{ project.id }}', '{{ project.name }}');"
+                           style="cursor:pointer; color:red" class="glyphicon glyphicon-remove  pull-right"
+                           rel="tooltip" title="Delete project '{{ project.name }}'." data-toggle="tooltip"
+                           data-placement="left"></i></td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="8">No Projects yet. Try <a href="{{ url_for('project_create') }}">creating</a> one.</td>
+                </tr>
+            {% endfor %}
+    </table>
+    <script>
+        $('#nav-bar li').removeClass('active');
+        $('#nav-projects').addClass('active');
+
+        // Delete the selected project
+        function onDelete (projectId, projectName) {
+            new BootstrapDialog({
+                title: 'Delete Project',
+                message: 'Are you sure you want to delete the project <b>'+projectName+'</b>?'
+                         +'<br/><br/><b>This operation cannot be undone.</b>',
+                type: BootstrapDialog.TYPE_WARNING,
+                closable: false,
+                data: {
+                    'callback': function (result) {
+                        if (result) {
+                            server.deleteProject(projectId, function (response) {
+                                window.location = response.redirect_url;
+                            });
+                        }
+                    }
+                },
+                buttons: [{
+                        label: 'Cancel',
+                        action: function(dialog) {
+                            typeof dialog.getData('callback') === 'function' && dialog.getData('callback')(false);
+                            dialog.close();
+                        }
+                    }, {
+                        label: 'OK',
+                        cssClass: 'btn-primary',
+                        action: function(dialog) {
+                            typeof dialog.getData('callback') === 'function' && dialog.getData('callback')(true);
+                            dialog.close();
+                        }
+                    }]
+            }).open();
+        }
+    </script>
+{% endblock %}

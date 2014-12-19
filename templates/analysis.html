@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Document Analysis{% endblock %}
+{% block extrahead %}
+    <script src="{{ url_for('static', filename='js/libraries/nv.d3.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dmcs/data.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dmcs/vis.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dmcs/vis.chord.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dmcs/vis.docnetwork.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dmcs/vis.documentbars.js') }}"></script>
+{% endblock %}
+{% block content %}
+<div id="analysis-form">
+    {% include "analysis_form.html" %}
+</div>
+<div id="analysis-results" style="display:none">
+    {% include "analysis_results.html" %}
+</div>
+{% endblock %}

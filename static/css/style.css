@@ -1,0 +1,66 @@
+.form-group.required .control-label:after {
+  content: "*";
+  color: red;
+}
+
+.carousel-control.left, .carousel-control.right{ 
+    background: none !important; 
+    filter: progid:none !important;
+    color: #222222 !important;
+    cursor: pointer;
+    margin-left: -75px !important;
+}
+
+.nv-bar:hover {
+    cursor: pointer;
+    stroke: black !important;
+ }
+
+.spinner {
+    height: 30px;
+    width: 30px;
+    background: url(../img/spinner.gif) no-repeat;
+}
+
+span.loading-text {
+    padding: 9px 0 0 9px;
+    position: absolute;
+}
+
+svg {
+    font-size: 1.05em;
+}
+
+/* Chord Diagram */
+#chord-circle:hover path.chord-fade {
+  display: none;
+}
+
+
+/* D3 Slider */
+.axis {
+    font: 10px sans-serif;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+.axis .domain {
+    fill: none;
+    stroke: #000;
+    stroke-opacity: .3;
+    stroke-width: 10px;
+    stroke-linecap: round;
+}
+.axis .halo {
+    fill: none;
+    stroke: #ddd;
+    stroke-width: 8px;
+    stroke-linecap: round;
+}
+.slider .handle {
+    fill: #fff;
+    stroke: #000;
+    stroke-opacity: .5;
+    stroke-width: 1.25px;
+    pointer-events: none;
+}

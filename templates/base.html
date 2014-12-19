@@ -1,0 +1,53 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    {% block head %}
+
+    <!-- JQuery -->
+    <script src="http://code.jquery.com/jquery-latest.min.js" type="text/javascript"></script>
+    <!-- Bootstrap -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrap-dialog.min.css') }}">
+    <script src="{{ url_for('static', filename='js/libraries/bootstrap-dialog.min.js') }}"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/bootstrapValidator.min.css') }}">
+    <script src="{{ url_for('static', filename='js/libraries/bootstrapValidator.min.js') }}"></script>
+    <!-- D3 -->
+    <script src="{{ url_for('static', filename='js/libraries/d3.min.js') }}"></script>
+
+    <!-- App resources -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/dmcs/server.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dmcs/util.js') }}"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Initialise tooltips
+            $('[rel="tooltip"]').tooltip();
+        });
+    </script>
+
+    <title>{% block title %}{% endblock %} - DMCS {{ app_version }}</title>
+    {% endblock %}
+    {% block extrahead %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <br/>
+                <ul id="nav-bar" class="nav nav-pills">
+                    <li class="active"><a href="{{url_for('analyse') }}">New Analysis</a></li>
+                    <li id="nav-results" class="disabled" style="display:none">
+                        <a href="javascript:return false;">Analysis Results</a>
+                    </li>
+                    <li id="nav-projects" ><a href="{{url_for('projects') }}">View Projects</a></li>
+                    <li id="nav-project-create" ><a href="{{url_for('project_create') }}">New Project</a></li>
+                </ul>
+                <div id="content">{% block content %}{% endblock %}</div>
+                <div id="footer">{% block footer %}{% endblock %}</div>
+            </div>
+        </div>
+    </div>
+</body>

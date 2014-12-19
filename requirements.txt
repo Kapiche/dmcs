@@ -1,0 +1,16 @@
+Flask==0.10.1
+Jinja2==2.7.2
+MarkupSafe==0.23
+PyYAML==3.11
+Werkzeug==0.9.4
+argparse==1.2.1
+caterpillar==1.0.0a
+caterpillar_lsi==1.0.0a
+itsdangerous==0.24
+lrparsing==1.0.5
+nltk==2.0.4
+numpy==1.8.1
+regex==2014.04.10
+scipy==0.13.3
+ujson==1.33
+wsgiref==0.1.2

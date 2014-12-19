@@ -1,0 +1,337 @@
+<h1>Document Analysis Results</h1>
+<br/>
+<div class="panel panel-success">
+    <div id="heading" class="panel-heading"></div>
+    <div class="panel-body">
+        <div id="vis-carousel" class="carousel slide" data-interval="false">
+            <!-- Wrapper for slides -->
+            <div class="carousel-inner">
+                <!-- Facets Circle Chart -->
+                <div class="item active">
+                    <div id="canvas" style="width: 1100px; height:700px; margin: 0 auto;">
+                        <div style="float:left; position: absolute; left:30px">
+                            <div id="vis-menu" class="list-group">
+                                <a id="vis-menu-bubbles" href="javascript:selectVis('bubbles');" class="list-group-item active">
+                                   Facet Bubbles
+                                </a>
+                                <a id="vis-menu-chord" href="javascript:selectVis('chord');" class="list-group-item">
+                                    Document Chords
+                                </a>
+                                <a id="vis-menu-docnetwork" href="javascript:selectVis('docnetwork');" class="list-group-item">
+                                    Document Network
+                                </a>
+                            </div>
+                        </div>
+                        <svg id="vis-bubbles">
+                            <g id="settings">
+                                <filter id="dropshadow" height="160%">
+                                    <feGaussianBlur in="SourceAlpha" stdDeviation="5"></feGaussianBlur> <!-- stdDeviation is how much to blur -->
+                                    <feOffset dx="0" dy="3" result="offsetblur"></feOffset> <!-- how much to offset -->
+                                    <feMerge> 
+                                        <feMergeNode></feMergeNode> <!-- this contains the offset blurred image -->
+                                        <feMergeNode in="SourceGraphic"></feMergeNode> <!-- this contains the element that the filter is applied to -->
+                                    </feMerge>
+                                </filter>
+                            </g>
+                            <g id="stroke"></g>
+                            <g id="color"></g>
+                            <g id="title"></g>
+                            <g id="value"></g>
+                        </svg>
+                        <svg id="vis-chord" style="display:none"></svg>
+                        <svg id="vis-docnetwork" style="display:none"></svg>
+                    </div>
+                </div>
+                <!-- Documents Chart -->
+                <div class="item">
+                    <div id="bar-chart" style="width: 1000px; height: 700px; float: left; padding-left: 100px"><svg></svg></div>
+                    <div id="bar-chart-facet-selection" style="float: right; width: 80px; padding-top: 30px"></div>
+                </div>
+                <!-- Document Text -->
+                <div id="document-text" class="item" style="height: 700px; overflow: auto; padding:7px 7px 7px 50px;"></div>
+            </div>
+            <a id="vis-nav-back" class="left carousel-control" style="display:none;">
+                <span class="glyphicon glyphicon-chevron-left"></span>
+            </a>
+        </div>
+    </div>
+</div>
+<script>
+    var canvasWidth = $("#canvas").width(),
+        canvasHeight = $("#canvas").height();
+    var fileName, project;
+    var visType = null;
+    var visualisations = {};
+    var headings = {};
+    var backIndex = 0;
+
+    /*
+     * Load analysis results after AJAX.
+     */
+    function loadAnalysisResults (aProjectName, aFileName, response) {
+
+        fileName = aFileName;
+        project = new data.ProjectResults(response['project'], response['results']);
+        headings['bubbles'] = 'Showing facet similarities for document <b>'+fileName+'</b> and project <b>'
+                              +project.name+'</b>';
+        headings['chord'] = headings['docnetwork'] = 'Showing all document similarities for document <b>'+fileName
+                                                     +'</b> and project <b>'+project.name+'</b>';
+
+        // Draw bubble chart
+        drawBubbles();     // TODO - create bubble chart the same way as chords
+
+        // Sync up page content
+        var nav = $('#vis-nav-back').on('click', function () {
+            $('#vis-carousel').carousel(backIndex);
+            updateHeading(backIndex);
+            if (backIndex > 0) {
+                backIndex--;
+            }
+            else {
+                $('#vis-nav-back').hide();
+            }
+        });
+        nav.children('span.glyphicon-chevron-left').attr('title', 'Back').tooltip();
+        $('#analysis-form').hide();
+        $('#analysis-results').show();
+        $('#nav-bar li').removeClass('active');
+        $('#nav-results').show().addClass('active');
+        selectVis('bubbles');
+    }
+
+
+    /**
+     * Change the visualisation type for the main panel.
+     */
+    function selectVis (type, force) {
+        if (!force && visType == type) {
+            // Already selected
+            return;
+        }
+
+        // Create if necessary
+        if (visualisations[type] == null) {
+            visualisations[type] = new vis[type]($('svg#vis-'+type).get(0), project, fileName, {
+                width: canvasWidth,
+                height: canvasHeight
+            }, showDocumentText);
+        }
+
+        // Update main panel
+        $('#vis-menu a').removeClass('active');
+        $('a#vis-menu-'+type).addClass('active');
+        $('div#canvas svg').hide();
+        $('svg#vis-'+type).show();
+        $('#heading').html(headings[type]);
+
+        visType = type;
+    }
+
+
+    /**
+     * Show document bar chart for specified facet.
+     */
+    function showBars (facetName) {
+
+        // Update carousel and heading
+        function updateView () {
+            $('#vis-nav-back').show();
+            $('#vis-carousel').carousel(1);
+            updateHeading(1);
+        }
+
+        if (!facetName) {
+            // No facet name supplied, just show the already drawn chart
+            updateView();
+        }
+        else {
+            new vis.documentbars($('#bar-chart').get(0), facetName, project,
+                function (docName, facetName) {
+                    backIndex = 1;
+                    showDocumentText(docName, facetName)
+                },
+                function  (numResultsShown) {
+                    // Generate heading text
+                    var dText;
+                    if (numResultsShown < project.facets[facetName].numDocuments) {
+                        dText = 'top ' + numResultsShown + '/' + project.facets[facetName].numDocuments;
+                    }
+                    else {
+                        dText = numResultsShown;
+                    }
+                    headings[1] = 'Showing similarities between document <b>'+fileName+'</b> and '+dText
+                                      +' documents for facet <b>'+facetName+'</b>'+' of project <b>'+project.name+'</b>';
+    
+                    updateView();
+                }
+            );
+        }
+        
+    }
+
+
+    /*
+     * Show the text for a document in the project.
+     */
+    function showDocumentText (docName, facetName) {
+        server.queryDocumentText(project.id, docName, facetName, function (docName, docText, facetName) {
+            $('#document-text').text(docText);
+            $('#vis-carousel').carousel(2);
+            headings[2] = 'Showing text for document <b>'+docName+'</b> of facet <b>'+facetName
+                          +'</b> for project <b>'+project.name+'</b>';
+            updateHeading(2);
+            var nav = $('#vis-nav-back').show();
+        }, facetName);
+    }
+
+
+    /*
+     * Update the page heading.
+     */
+    function updateHeading (i) {
+        i = i == 0 ? visType : i;
+        $('#heading').html(headings[i]);
+    }
+
+
+    /*
+     * Draw the bubble chart that shows average similarity with project facets.
+     */
+    function drawBubbles () {
+        // D3 Objects
+        var svg, bubbles;
+
+        // starting angle for the bowls
+        var angle = -Math.PI / 2;
+
+        // equally space out the bowls
+        var diffAngle = 2 * Math.PI / project.numFacets;
+
+        // offset for the center of bowls
+        var offsetX = canvasWidth / 2;
+        var offsetY = canvasHeight / 2;
+
+        var minDimension = Math.min( canvasWidth , canvasHeight ) * 0.90;
+
+        // bowl size and distance
+        var circleRadius = 80;
+        var circleDistance = 200;
+
+        // create datapoints
+        var dataPoints = [];
+        for (facetName in project.facets) {
+            var facet = project.facets[facetName];
+            var value = project.results[facetName]['_average'];
+            dataPoints.push({
+                value: value,
+                x: Math.round( offsetX + Math.cos( angle ) * circleDistance ),
+                y: Math.round( offsetY + Math.sin( angle ) * circleDistance ) + 5,
+                fillColor: facet.colour,
+                strokeColor: facet.colour,
+                title: facetName,
+                description: Math.round(100*value) + " %",
+                clipHeightOffset: Math.round((1-value) * circleRadius * 2),
+                uniqueid: util.uuid()
+            });
+            angle += diffAngle;
+        }
+
+        ////////////////////////////
+        // d3
+        
+        svg = d3.select("svg");
+
+        function isPointInCircle(point, circle) {
+            return Math.pow(circle.x - point[0], 2) + Math.pow(circle.y - point[1], 2) < Math.pow(circleRadius, 2);
+        }
+
+        // Circle interactivity
+        svg.on("mousemove", function () {
+            var m = d3.mouse(this);
+            var hoverCircle = null;
+            bubbles.each(function (d) {
+                if (isPointInCircle(m, d)) {
+                    hoverCircle = d.uniqueid;
+                    return false; 
+                }
+            });
+            bubbles.style("opacity", function (d) {
+                if (hoverCircle == null) {
+                    return 1;
+                }
+                return d.uniqueid == hoverCircle ? 1 : 0.5;
+            });
+            document.body.style.cursor = hoverCircle != null ? 'pointer' : 'auto';
+        }).on("click", function () {
+            var m = d3.mouse(this);
+            bubbles.each(function (d) {
+                if (isPointInCircle(m, d)) {
+                    document.body.style.cursor = 'auto';
+                    showBars(d.title);
+                    return false;
+                }
+            });
+        });
+
+        // Draw bubbles. Each one represents a facet.
+        //
+        // Clipping, which controls how full the bubbles are
+        svg.selectAll("clipPath").data( dataPoints ).enter().append("clipPath")
+            .attr("id", function(d){ return d.uniqueid;})
+            .append("rect")
+                .attr("name", function(d){ return d.value; })
+                .attr("x", function(d) { return d.x - circleRadius })
+                .attr("y", function(d) { return d.y - circleRadius + d.clipHeightOffset })
+                .attr("height", function (d) { return circleRadius * 2 - d.clipHeightOffset; })
+                .attr("width" , circleRadius * 2 );
+        // Bubble body
+        bubbles = d3.select("svg").select("#color").selectAll("circle")
+            .data(dataPoints).enter().append("circle")
+                .attr("r", circleRadius )
+                .attr("fill", function(d) { return d.fillColor;  })
+                .attr("clip-path", function(d){ return "url(#"+d.uniqueid+")"; } )
+                .attr("style","stroke:rgb(0,0,0);stroke-width:0;z-index:10000;")
+                .attr("cx", function(d) { return d.x; })
+                .attr("cy", function(d) { return d.y; });
+        // Bubble outline and shadow
+        d3.select("svg").select("#stroke").selectAll("circle")
+            .data(dataPoints).enter().append("circle")
+                .attr("r", circleRadius )
+                .attr('id', function (d, i) { return 'circle-' + i; })
+                .attr("style",function(d){return"stroke:"+d.strokeColor+";stroke-width:2;fill:white;filter:url(#dropshadow)"; })
+                .attr("cx", function(d) { return d.x; })
+                .attr("cy", function(d) { return d.y; });
+        // Facet name
+        d3.select("svg").select("#title").selectAll("text")
+            .data(dataPoints).enter().append("text")
+                .attr("style", "font-weight:bold;")
+                .attr("text-anchor", "middle")
+                .attr("x", function(d) { return d.x; })
+                .attr("y", function(d) { return d.y - 30 - circleRadius + d.clipHeightOffset ; })
+                .text(function(d){ return d.title });
+        // Similarity value
+        d3.select("svg").select("#value").selectAll("text")
+            .data(dataPoints).enter().append("text")
+                .attr("text-anchor", "middle")
+                .attr("x", function(d) { return d.x; })
+                .attr("y", function(d) { return d.y - 10 - circleRadius + d.clipHeightOffset ; })
+                .text(function(d){ return d.description });
+
+        visualisations['bubbles'] = {};
+
+        // Draw facet selection for bar chart
+        var barChartFacets = d3.select("#bar-chart-facet-selection").selectAll("div").data(dataPoints).enter().append("div")
+            .style('height', '20px')
+            .style('width', '20px')
+            .style('margin-bottom', '3px')
+            .style('background-color', function (d) { return d.fillColor})
+            .style('cursor', 'pointer')
+            .attr('id', function (d, i) { return 'bar-chart-facet-' + i; })
+            .on("click", function (d) {
+                showBars(d.title);
+            });
+        barChartFacets.each(function (d, i) {
+            $('#bar-chart-facet-'+i).tooltip({placement: 'left', title: d.title});
+        });
+    }
+</script>

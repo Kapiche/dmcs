@@ -1,0 +1,129 @@
+<h1>Start Document Analysis</h1>
+<br/>
+<div class="row">
+    <div class="col-lg-8">
+        <form data-toggle="validator" role="form" id="analyse-form" class="form-horizontal"
+              method="POST" enctype=multipart/form-data >
+            <div class="well bs-component">
+                <div class="form-group required">
+                    <label class="col-lg-2 control-label">Project:</label>
+                    <div class="col-lg-10">
+                        <select id="project" class="form-control" style="width: 300px" name="project">
+                            <option value="">Please select a project...</option>
+                            {% for project in projects %}
+                                <option value="{{ project.id }}">{{ project.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="well bs-component">
+                <fieldset>
+                    <div class="form-group">
+                        <label for="document" class="col-lg-2 control-label">Document:</label>
+                        <div class="col-lg-10">
+                            <input type="file" id="document" style="width: 300px" name="document"
+                                data-bv-notempty data-bv-notempty-message="An input document is required">
+                        </div>
+                    </div>
+                    <div class="form-group pull-right">
+                        <div class="col-lg-12">
+                            <button onclick="beforeValidate('document')" type="submit" class="btn btn-primary"
+                                    style="width:180px">Analyse Document</button>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+            <div class="well bs-component">
+                <fieldset>
+                    <div class="form-group">
+                        <label for="document" class="col-lg-2 control-label">Text:</label>
+                        <div class="col-lg-10">
+                            <textarea id="text" style="width: 300px" name="text"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group pull-right">
+                        <div class="col-lg-12">
+                            <button onclick="beforeValidate('text')" type="submit" class="btn btn-primary"
+                                    style="width:180px">Analyse Text</button>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+        </form>
+    </div>
+    <div class="col-lg-3">
+        <div class="panel panel-info">
+            <div class="panel-body">This form allows you to select a project context and a document <b>or</b> free text to analyse.</div>
+        </div>
+    </div>
+</div>
+<script>
+    var submitType;
+    function beforeValidate (type) {
+        submitType = type;
+        if (type == 'document') {
+            $('input[name=document]').removeClass('field-excluded');
+            $('textarea[name=text]').addClass('field-excluded');
+        }
+        else {
+            $('input[name=document]').addClass('field-excluded');
+            $('textarea[name=text]').removeClass('field-excluded');
+        }
+    }
+
+    $(document).ready(function() {
+        // Form validation
+        $('#analyse-form').bootstrapValidator({
+            excluded: ['.field-excluded'],
+            feedbackIcons: {
+                valid: 'glyphicon glyphicon-ok',
+                invalid: 'glyphicon glyphicon-remove',
+                validating: 'glyphicon glyphicon-refresh'
+            },
+            submitHandler: function (validator, form) {
+                var projectName = $('select#project option:selected').text();
+                var fileName = submitType == 'document' ? $('#document')[0].files[0].name : 'Free Text';
+                $.ajax({
+                    url: '{{ url_for("analyse") }}',
+                    type: 'POST',
+                    //Ajax events
+                    success: function (response) { loadAnalysisResults(projectName, fileName, response); },
+                    error: server.handleError,
+                    data: new FormData(form[0]),
+                    //Options to tell jQuery not to process data or worry about content-type.
+                    cache: false,
+                    contentType: false,
+                    processData: false
+                });
+            },
+            fields: {
+                project: {
+                    validators: {
+                        notEmpty: {
+                            message: 'A project must be selected'
+                        }
+                    }
+                },
+                document: {
+                    validators: {
+                        notEmpty: {
+                            message: 'An input document is required'
+                        },
+                        regexp: {
+                            regexp: /.+(\.txt)$/i,
+                            message: 'Input document must be a text file with .txt extension'
+                        }
+                    }
+                },
+                text: {
+                    validators: {
+                        notEmpty: {
+                            message: 'Some input text is required'
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
